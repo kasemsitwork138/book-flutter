@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:myproject/screen/category.dart';
+import '../helper/apiservice.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class categoryEdit extends StatefulWidget {
   const categoryEdit({super.key});
@@ -115,6 +117,8 @@ class _categoryEditState extends State<categoryEdit> {
                   );
 
                   try {
+                    final prefs = await SharedPreferences.getInstance();
+                    final token = prefs.getString('token');
                     var request = http.MultipartRequest(
                       'POST',
                       Uri.parse('http://localhost:8000/api/category'),
@@ -122,12 +126,13 @@ class _categoryEditState extends State<categoryEdit> {
 
                     request.headers['Accept'] = 'application/json';
                     request.headers['X-Requested-With'] = 'XMLHttpRequest';
+                    request.headers['Authorization'] = 'Bearer $token';
 
                     // ข้อมูลทั่วไป
                     request.fields['name'] = _nameController.text;
                     // request.fields['title'] = _titleController.text;
                     // request.fields['author'] = _authorController.text;
-                    // request.fields['category_id'] = _selectedCategoryId
+                    // request.fields['category_id'] = _selectedCategoryI
                     //     .toString();
                     // request.fields['published_date'] =
                     //     _publishedDateController.text;

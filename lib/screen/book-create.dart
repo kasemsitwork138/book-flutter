@@ -6,6 +6,8 @@ import 'package:myproject/screen/book.dart';
 import 'package:myproject/screen/menu.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../helper/apiservice.dart';
 
 class bookCreate extends StatefulWidget {
   const bookCreate({super.key});
@@ -41,9 +43,9 @@ class _bookCreateState extends State<bookCreate> {
 
   Future<void> fetchCategories() async {
     try {
-      final res = await http.get(
-        Uri.parse('http://localhost:8000/api/category'),
-      );
+      final res = await ApiService.get('/category');
+      print('status: ${res.statusCode}');
+      print('body: ${res.body}');
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as List;
@@ -61,25 +63,23 @@ class _bookCreateState extends State<bookCreate> {
 
   Future<void> createBook() async {
     try {
-      final res = await http.post(
-        Uri.parse('http://localhost:8000/api/books'),
-        body: {
-          'title': _titleController.text,
-          'author': _authorController.text,
-          'published_date': _publishedDateController.text,
-          'category_id': _selectedCategoryId.toString(),
-        },
-      );
+      final res = await ApiService.post('/books', {
+        'title': _titleController.text,
+        'author': _authorController.text,
+        'published_date': _publishedDateController.text,
+        'category_id': _selectedCategoryId.toString(),
+      });
 
       if (res.statusCode == 201) {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('สร้างหนังสือสำเร็จ')));
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const book()),
-          );
+          // Navigator.pushReplacement(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => const book()),
+          // );
+          Navigator.pop(context);
         }
       } else {
         if (context.mounted) {
@@ -226,6 +226,8 @@ class _bookCreateState extends State<bookCreate> {
                   );
 
                   try {
+                    final prefs = await SharedPreferences.getInstance();
+                    final token = prefs.getString('token');
                     var request = http.MultipartRequest(
                       'POST',
                       Uri.parse('http://localhost:8000/api/books'),
@@ -233,6 +235,7 @@ class _bookCreateState extends State<bookCreate> {
 
                     request.headers['Accept'] = 'application/json';
                     request.headers['X-Requested-With'] = 'XMLHttpRequest';
+                    request.headers['Authorization'] = 'Bearer $token';
 
                     // ข้อมูลทั่วไป
                     request.fields['title'] = _titleController.text;

@@ -6,6 +6,8 @@ import 'package:myproject/screen/book.dart';
 import 'package:myproject/screen/menu.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:myproject/helper/apiservice.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class bookEdit extends StatefulWidget {
   final Map<String, dynamic> book;
@@ -53,10 +55,7 @@ class _bookEditState extends State<bookEdit> {
 
   Future<void> fetchCategories() async {
     try {
-      final res = await http.get(
-        Uri.parse('http://localhost:8000/api/category'),
-      );
-
+      final res = await ApiService.get('/category');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as List;
         print(data);
@@ -73,9 +72,7 @@ class _bookEditState extends State<bookEdit> {
 
   Future<void> fetchBookById() async {
     try {
-      final res = await http.get(
-        Uri.parse('http://localhost:8000/api/books/${widget.book['id']}'),
-      );
+      final res = await ApiService.get('/books/${widget.book['id']}');
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -96,25 +93,23 @@ class _bookEditState extends State<bookEdit> {
 
   Future<void> editBook() async {
     try {
-      final res = await http.put(
-        Uri.parse('http://localhost:8000/api/books/${widget.book['id']}'),
-        body: {
-          'title': _titleController.text,
-          'author': _authorController.text,
-          'published_date': _publishedDateController.text,
-          'category_id': _selectedCategoryId.toString(),
-        },
-      );
+      final res = await ApiService.put('/books/${widget.book['id']}', {
+        'title': _titleController.text,
+        'author': _authorController.text,
+        'published_date': _publishedDateController.text,
+        'category_id': _selectedCategoryId.toString(),
+      });
 
       if (res.statusCode == 201) {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('แก้ไขหนังสือสำเร็จ')));
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const book()),
-          );
+          // Navigator.pushReplacement(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => const book()),
+          // );
+          Navigator.pop(context);
         }
       } else {
         if (context.mounted) {
@@ -261,6 +256,8 @@ class _bookEditState extends State<bookEdit> {
                   );
 
                   try {
+                    final prefs = await SharedPreferences.getInstance();
+                    final token = prefs.getString('token');
                     var request = http.MultipartRequest(
                       'POST',
                       Uri.parse(
@@ -272,6 +269,7 @@ class _bookEditState extends State<bookEdit> {
                     // ข้อมูลทั่วไป
                     request.headers['Accept'] = 'application/json';
                     request.headers['X-Requested-With'] = 'XMLHttpRequest';
+                    request.headers['Authorization'] = 'Bearer $token';
                     request.fields['_method'] = 'PUT';
                     request.fields['title'] = _titleController.text;
                     request.fields['author'] = _authorController.text;
@@ -303,10 +301,11 @@ class _bookEditState extends State<bookEdit> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('แก้ไขสำเร็จ')),
                         );
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const book()),
-                        );
+                        // Navigator.pushReplacement(
+                        //   context,
+                        //   MaterialPageRoute(builder: (_) => const book()),
+                        // );
+                        Navigator.pop(context);
                       }
                     } else {
                       if (context.mounted) {

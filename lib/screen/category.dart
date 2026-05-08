@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'category-edit.dart';
 import 'category-create.dart';
+import '../helper/apiservice.dart';
 
 class category extends StatefulWidget {
   const category({super.key});
@@ -23,9 +24,7 @@ class _categoryState extends State<category> {
 
   Future<void> fetchCategoryApi() async {
     try {
-      final res = await http.get(
-        Uri.parse('http://localhost:8000/api/category'),
-      );
+      final res = await ApiService.get('/category');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as List;
         setState(() {
@@ -60,9 +59,7 @@ class _categoryState extends State<category> {
     );
     if (confirm != true) return;
     try {
-      final res = await http.delete(
-        Uri.parse('http://localhost:8000/api/category/$category_id'),
-      );
+      final res = await ApiService.delete('/category/$category_id');
       if (res.statusCode == 200) {
         if (context.mounted) {
           ScaffoldMessenger.of(
@@ -165,21 +162,21 @@ class _categoryState extends State<category> {
                                     //   },
                                     //   child: const Text('ดูรายละเอียด'),
                                     // ),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => categoryEdit(),
-                                          ),
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.orange,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      child: const Text('แก้ไข'),
-                                    ),
+                                    // ElevatedButton(
+                                    //   onPressed: () {
+                                    //     Navigator.push(
+                                    //       context,
+                                    //       MaterialPageRoute(
+                                    //         builder: (_) => categoryEdit(),
+                                    //       ),
+                                    //     );
+                                    //   },
+                                    //   style: ElevatedButton.styleFrom(
+                                    //     backgroundColor: Colors.orange,
+                                    //     foregroundColor: Colors.white,
+                                    //   ),
+                                    //   child: const Text('แก้ไข'),
+                                    // ),
                                     ElevatedButton(
                                       onPressed: () => deleteCategoryApi(
                                         context,
@@ -232,7 +229,9 @@ class _categoryState extends State<category> {
                   MaterialPageRoute(
                     builder: (context) => const categoryCreate(),
                   ),
-                );
+                ).then((value) {
+                  fetchCategoryApi();
+                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'lending.dart';
+import '../helper/apiservice.dart';
 
 class CreateLendingBook extends StatefulWidget {
   const CreateLendingBook({super.key});
@@ -36,9 +37,7 @@ class _CreateLendingBookState extends State<CreateLendingBook> {
 
   Future<void> getBooks() async {
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:8000/api/books'),
-      );
+      final response = await ApiService.get('/books');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as List;
         setState(() {
@@ -54,9 +53,7 @@ class _CreateLendingBookState extends State<CreateLendingBook> {
 
   Future<void> getUsers() async {
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:8000/api/users'),
-      );
+      final response = await ApiService.get('/users');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as List;
         setState(() {
@@ -163,19 +160,26 @@ class _CreateLendingBookState extends State<CreateLendingBook> {
                 );
 
                 try {
-                  final res = await http.post(
-                    Uri.parse('http://localhost:8000/api/lendingbooks'),
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Accept': 'application/json',
-                    },
-                    body: jsonEncode({
-                      'book_id': _selectedBookId,
-                      'user_id': _selectedUserId,
-                      'start_date': _startDateController.text,
-                      'end_date': _endDateController.text,
-                    }),
-                  );
+                  // final res = await http.post(
+                  //   Uri.parse('http://localhost:8000/api/lendingbooks'),
+                  //   headers: {
+                  //     'Content-Type': 'application/json',
+                  //     'Accept': 'application/json',
+                  //   },
+                  //   body: jsonEncode({
+                  //     'book_id': _selectedBookId,
+                  //     'user_id': _selectedUserId,
+                  //     'start_date': _startDateController.text,
+                  //     'end_date': _endDateController.text,
+                  //   }),
+                  // );
+
+                  final res = await ApiService.post('/lendingbooks', {
+                    'book_id': _selectedBookId,
+                    'user_id': _selectedUserId,
+                    'start_date': _startDateController.text,
+                    'end_date': _endDateController.text,
+                  });
 
                   if (context.mounted) Navigator.pop(context);
 
@@ -184,10 +188,11 @@ class _CreateLendingBookState extends State<CreateLendingBook> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('ยืมหนังสือสำเร็จ')),
                       );
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const lending()),
-                      );
+                      // Navigator.pushReplacement(
+                      //   context,
+                      //   MaterialPageRoute(builder: (_) => const lending()),
+                      // );
+                      Navigator.pop(context);
                     }
                   } else {
                     if (context.mounted) {

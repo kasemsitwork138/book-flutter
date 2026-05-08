@@ -5,6 +5,7 @@ import 'menu.dart';
 import 'book.dart';
 import 'category.dart';
 import 'lending-create.dart';
+import '../helper/apiservice.dart';
 
 class lending extends StatefulWidget {
   const lending({super.key});
@@ -26,9 +27,7 @@ class _lendingState extends State<lending> {
 
   Future<void> fetchLedingBookApi() async {
     try {
-      final res = await http.get(
-        Uri.parse('http://localhost:8000/api/lendingbooks'),
-      );
+      final res = await ApiService.get('/lendingbooks');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as List;
         setState(() {
@@ -78,9 +77,7 @@ class _lendingState extends State<lending> {
     );
     if (confirm != true) return;
     try {
-      final res = await http.delete(
-        Uri.parse('http://localhost:8000/api/lendingbooks/$lending_id'),
-      );
+      final res = await ApiService.delete('/lendingbooks/$lending_id');
       if (res.statusCode == 200) {
         if (context.mounted) {
           ScaffoldMessenger.of(
@@ -122,20 +119,13 @@ class _lendingState extends State<lending> {
     );
     if (confirm != true) return;
     try {
-      final res = await http.put(
-        Uri.parse('http://localhost:8000/api/lendingbooks/$lending_id'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'user_id': items['user_id'],
-          'book_id': items['book_id'],
-          'start_date': items['start_date'],
-          'end_date': items['end_date'],
-          'status': 'returned',
-        }),
-      );
+      final res = await ApiService.put('/lendingbooks/$lending_id', {
+        'user_id': items['user_id'],
+        'book_id': items['book_id'],
+        'start_date': items['start_date'],
+        'end_date': items['end_date'],
+        'status': 'returned',
+      });
       if (res.statusCode == 200) {
         if (context.mounted) {
           ScaffoldMessenger.of(

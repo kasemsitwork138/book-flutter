@@ -15,10 +15,12 @@ class BookDetail extends StatelessWidget {
           children: [
             Center(
               child: Image.network(
-                book['cover_image'],
+                book['cover_image'] ?? '',
                 height: 200,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.book, size: 100),
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.book,
+                  size: 60,
+                ), // แสดง icon แทนถ้าโหลดไม่ได้
               ),
             ),
             const SizedBox(height: 16),

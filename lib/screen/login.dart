@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'menu.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -22,7 +23,6 @@ class _LoginState extends State<Login> {
   }
 
   Future<void> _login() async {
-    // แสดง Loading
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -37,20 +37,26 @@ class _LoginState extends State<Login> {
           'Accept': 'application/json',
         },
         body: jsonEncode({
-          'email': _emailController.text,
+          'email': _emailController.text, // ต้องเป็น email
           'password': _passwordController.text,
         }),
       );
 
-      if (context.mounted) Navigator.pop(context); // ปิด Loading
+      if (context.mounted) Navigator.pop(context);
+
+      print('status: ${res.statusCode}');
+      print('body: ${res.body}');
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        setState(() {
-          _token = data['token']; // เก็บ token
-        });
+        final token =
+            data['access_token']; // เปลี่ยนจาก token เป็น access_token
 
-        print('Token: $_token'); // ดู token ใน console
+        print('Token: $token');
+
+        // เก็บ token ใน SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
 
         if (context.mounted) {
           Navigator.pushReplacement(
@@ -60,8 +66,9 @@ class _LoginState extends State<Login> {
         }
       } else {
         if (context.mounted) {
+          final data = jsonDecode(res.body);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('อีเมลหรือรหัสผ่านไม่ถูกต้อง')),
+            SnackBar(content: Text(data['message'] ?? 'เข้าสู่ระบบไม่สำเร็จ')),
           );
         }
       }

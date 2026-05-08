@@ -6,6 +6,8 @@ import 'menu.dart';
 import 'book-detail.dart';
 import 'book-create.dart';
 import 'book-edit.dart';
+import '../helper/apiservice.dart';
+import 'dart:async';
 
 class book extends StatefulWidget {
   const book({super.key});
@@ -18,6 +20,7 @@ class _bookState extends State<book> {
   List<Map<String, dynamic>> books = [];
   bool isLoading = true;
   final _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void dispose() {
@@ -33,7 +36,7 @@ class _bookState extends State<book> {
 
   Future<void> fetchBookApi() async {
     try {
-      final res = await http.get(Uri.parse('http://localhost:8000/api/books'));
+      final res = await ApiService.get('/books');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as List; // รับเป็น List
         setState(() {
@@ -60,12 +63,15 @@ class _bookState extends State<book> {
   }
 
   Future<void> searchBooks({String? search, int? categoryId}) async {
-    final uri = Uri.http('localhost:8000', '/api/books/search', {
-      if (search != null && search.isNotEmpty) 'search': search,
+    // final uri = Uri.http('localhost:8000', '/api/books/search', {
+    //   if (search != null && search.isNotEmpty) 'search': search,
+    //   if (categoryId != null) 'category': categoryId.toString(),
+    // });
+
+    final res = await ApiService.get('/books/search', {
+      if (search != null && search.isNotEmpty) 'search': search!,
       if (categoryId != null) 'category': categoryId.toString(),
     });
-
-    final res = await http.get(uri);
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body) as List;
       setState(() {
@@ -73,12 +79,16 @@ class _bookState extends State<book> {
             .map(
               (item) => {
                 'id': item['id'],
-                'cover_image': item['cover_image'],
+                'cover_image': item['cover_image'] ?? '',
                 'title': item['title'],
                 'published_date': item['published_date'],
                 'author': item['author'],
-                'category': item['category']['name'],
-                'category_id': item['category']['id'],
+                'category': item['category'] != null
+                    ? item['category']['name']
+                    : '-',
+                'category_id': item['category'] != null
+                    ? item['category']['id']
+                    : null,
               },
             )
             .toList();
@@ -106,9 +116,7 @@ class _bookState extends State<book> {
     );
     if (confirm != true) return;
     try {
-      final res = await http.delete(
-        Uri.parse('http://localhost:8000/api/books/$BookId'),
-      );
+      final res = await ApiService.delete('/books/$BookId');
       if (res.statusCode == 200) {
         if (context.mounted) {
           ScaffoldMessenger.of(
@@ -161,11 +169,15 @@ class _bookState extends State<book> {
                       border: const OutlineInputBorder(),
                     ),
                     onChanged: (value) {
-                      if (value.isEmpty) {
-                        fetchBookApi(); // ถ้าลบข้อความออกโหลดทั้งหมด
-                      } else {
-                        searchBooks(search: value); // ค้นหาตาม keyword
-                      }
+                      if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+                      _debounce = Timer(const Duration(milliseconds: 300), () {
+                        if (value.isEmpty) {
+                          fetchBookApi();
+                        } else {
+                          searchBooks(search: value);
+                        }
+                      });
                     },
                   ),
                 ),
@@ -190,7 +202,7 @@ class _bookState extends State<book> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Image.network(
-                                    book['cover_image'],
+                                    book['cover_image'] ?? '',
                                     width: 60,
                                     height: 90,
                                     fit: BoxFit.cover,

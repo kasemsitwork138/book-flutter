@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'menu.dart';
 import 'book.dart';
 import 'category.dart';
@@ -123,6 +124,8 @@ class _categoryCreateState extends State<categoryCreate> {
                   );
 
                   try {
+                    final prefs = await SharedPreferences.getInstance();
+                    final token = prefs.getString('token');
                     var request = http.MultipartRequest(
                       'POST',
                       Uri.parse('http://localhost:8000/api/category'),
@@ -130,6 +133,7 @@ class _categoryCreateState extends State<categoryCreate> {
 
                     request.headers['Accept'] = 'application/json';
                     request.headers['X-Requested-With'] = 'XMLHttpRequest';
+                    request.headers['Authorization'] = 'Bearer $token';
 
                     // ข้อมูลทั่วไป
                     request.fields['name'] = _nameController.text;
@@ -163,10 +167,7 @@ class _categoryCreateState extends State<categoryCreate> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('บันทึกสำเร็จ')),
                         );
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const category()),
-                        );
+                        Navigator.pop(context);
                       }
                     } else {
                       if (context.mounted) {

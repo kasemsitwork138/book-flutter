@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'menu.dart';
+import '../helper/apiservice.dart';
 
 class dashboard extends StatefulWidget {
   const dashboard({super.key});
@@ -24,9 +25,7 @@ class _dashboardState extends State<dashboard> {
 
   Future<void> fetchDashboard() async {
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:8000/api/books/showinfo'), // เปลี่ยน URL
-      );
+      final response = await ApiService.get('/books/showinfo');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

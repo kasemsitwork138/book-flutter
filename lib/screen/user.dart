@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../helper/apiservice.dart';
+import 'user-create.dart';
+import 'user-edit.dart';
 
 class user extends StatefulWidget {
   const user({super.key});
@@ -20,7 +23,8 @@ class _userState extends State<user> {
 
   Future<void> fetchUserApi() async {
     try {
-      final res = await http.get(Uri.parse('http://localhost:8000/api/users'));
+      //final res = await http.get(Uri.parse('http://localhost:8000/api/users'));
+      final res = await ApiService.get('/users');
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as List;
         setState(() {
@@ -65,10 +69,7 @@ class _userState extends State<user> {
     if (confirm != true) return;
 
     try {
-      final res = await http.delete(
-        Uri.parse('http://localhost:8000/api/users/$userId'),
-        headers: {'Accept': 'application/json'},
-      );
+      final res = await ApiService.delete('/users/$userId');
       if (res.statusCode == 200) {
         if (context.mounted) {
           ScaffoldMessenger.of(
@@ -144,7 +145,15 @@ class _userState extends State<user> {
                                   spacing: 8,
                                   children: [
                                     ElevatedButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                userEdit(user: items),
+                                          ),
+                                        ).then((_) => fetchUserApi());
+                                      },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.orange,
                                         foregroundColor: Colors.white,
@@ -177,10 +186,10 @@ class _userState extends State<user> {
         height: 50,
         child: ElevatedButton(
           onPressed: () {
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (context) => const userCreate()),
-            // );
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const userCreate()),
+            );
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.blue,
